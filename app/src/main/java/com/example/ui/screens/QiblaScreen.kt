@@ -8,10 +8,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -21,7 +23,6 @@ import com.example.ui.theme.ElegantLavenderPrimary
 import com.example.ui.theme.SuccessGreen
 import com.example.ui.viewmodel.MainUiState
 import com.example.ui.viewmodel.MainViewModel
-import kotlin.math.abs
 
 @Composable
 fun QiblaScreen(
