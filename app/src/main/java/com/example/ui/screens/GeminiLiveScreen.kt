@@ -454,9 +454,37 @@ fun GeminiChatBubble(
 
                 if (!isUser) {
                     Spacer(modifier = Modifier.height(8.dp))
+                    if (message.sourceLabel != null) {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = if (message.isLiveAI) ElegantLavenderPrimary.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                            modifier = Modifier.padding(bottom = 6.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = if (message.isLiveAI) Icons.Filled.AutoAwesome else Icons.Filled.MenuBook,
+                                    contentDescription = null,
+                                    tint = if (message.isLiveAI) ElegantLavenderPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(12.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = message.sourceLabel,
+                                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                    color = if (message.isLiveAI) ElegantLavenderPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         IconButton(
                             onClick = onSpeak,

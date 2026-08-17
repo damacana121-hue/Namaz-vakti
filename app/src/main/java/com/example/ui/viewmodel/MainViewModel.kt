@@ -32,7 +32,9 @@ data class ChatMessage(
     val id: String = UUID.randomUUID().toString(),
     val sender: String, // "user" or "gemini"
     val text: String,
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    val isLiveAI: Boolean = false,
+    val sourceLabel: String? = null
 )
 
 data class MainUiState(
@@ -269,11 +271,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 customContext = contextData
             )
 
-            val replyText = result.getOrElse {
-                "Bağlantı sırasında bir aksaklık oldu. Lütfen sorunuzu tekrar deneyiniz."
+            val answer = result.getOrElse {
+                com.example.data.remote.GeminiAnswer(
+                    text = "Bağlantı sırasında bir aksaklık oldu. Lütfen sorunuzu tekrar deneyiniz.",
+                    isLiveAI = false,
+                    sourceLabel = "Bağlantı Hatası"
+                )
             }
 
-            val geminiMsg = ChatMessage(sender = "gemini", text = replyText)
+            val geminiMsg = ChatMessage(
+                sender = "gemini",
+                text = answer.text,
+                isLiveAI = answer.isLiveAI,
+                sourceLabel = answer.sourceLabel
+            )
             _uiState.update {
                 it.copy(
                     geminiMessages = it.geminiMessages + geminiMsg,
@@ -282,7 +293,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
 
             if (autoSpeak) {
-                voiceSpeechManager.speakText(replyText)
+                voiceSpeechManager.speakText(answer.text)
             }
         }
     }

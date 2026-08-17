@@ -39,10 +39,15 @@ class SettingsRepository(context: Context) {
     val settings: StateFlow<UserSettings> = _settings.asStateFlow()
 
     private fun loadSettings(): UserSettings {
+        val latLongBits = prefs.getLong("city_lat_double", -1L)
+        val lonLongBits = prefs.getLong("city_lon_double", -1L)
+        val lat = if (latLongBits != -1L) java.lang.Double.longBitsToDouble(latLongBits) else prefs.getFloat("city_lat", 41.0082f).toDouble()
+        val lon = if (lonLongBits != -1L) java.lang.Double.longBitsToDouble(lonLongBits) else prefs.getFloat("city_lon", 28.9784f).toDouble()
+
         return UserSettings(
             cityName = prefs.getString("city_name", "İstanbul") ?: "İstanbul",
-            latitude = prefs.getFloat("city_lat", 41.0082f).toDouble(),
-            longitude = prefs.getFloat("city_lon", 28.9784f).toDouble(),
+            latitude = lat,
+            longitude = lon,
             timeZoneOffset = prefs.getFloat("city_tz", 3.0f).toDouble(),
             notifFajr = prefs.getBoolean("notif_fajr", true),
             notifSunrise = prefs.getBoolean("notif_sunrise", false),
@@ -64,6 +69,8 @@ class SettingsRepository(context: Context) {
     fun updateCity(city: CityLocation) {
         prefs.edit()
             .putString("city_name", city.name)
+            .putLong("city_lat_double", java.lang.Double.doubleToRawLongBits(city.latitude))
+            .putLong("city_lon_double", java.lang.Double.doubleToRawLongBits(city.longitude))
             .putFloat("city_lat", city.latitude.toFloat())
             .putFloat("city_lon", city.longitude.toFloat())
             .putFloat("city_tz", city.timeZoneOffsetHours.toFloat())

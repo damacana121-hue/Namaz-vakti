@@ -49,7 +49,8 @@ object NotificationHelper {
         prayerType: PrayerType,
         cityName: String,
         timeFormatted: String,
-        isEarlyReminder: Boolean = false
+        isEarlyReminder: Boolean = false,
+        soundType: String = "Ezan"
     ) {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
@@ -86,8 +87,20 @@ object NotificationHelper {
             .setPriority(if (isEarlyReminder) NotificationCompat.PRIORITY_DEFAULT else NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
-            .setSound(defaultSoundUri)
-            .setVibrate(longArrayOf(0, 500, 250, 500))
+
+        when (soundType) {
+            "Sessiz" -> {
+                builder.setSilent(true)
+            }
+            "Sadece Titreşim" -> {
+                builder.setSilent(true)
+                builder.setVibrate(longArrayOf(0, 500, 250, 500))
+            }
+            else -> {
+                builder.setSound(defaultSoundUri)
+                builder.setVibrate(longArrayOf(0, 500, 250, 500))
+            }
+        }
 
         val notificationId = if (isEarlyReminder) 100 + prayerType.ordinal else 10 + prayerType.ordinal
         notificationManager.notify(notificationId, builder.build())
@@ -99,7 +112,8 @@ object NotificationHelper {
             prayerType = PrayerType.DHUHR,
             cityName = cityName,
             timeFormatted = "13:15",
-            isEarlyReminder = false
+            isEarlyReminder = false,
+            soundType = "Ezan"
         )
     }
 }

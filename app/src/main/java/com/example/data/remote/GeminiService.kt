@@ -59,6 +59,12 @@ interface GeminiApi {
     ): GeminiResponse
 }
 
+data class GeminiAnswer(
+    val text: String,
+    val isLiveAI: Boolean,
+    val sourceLabel: String
+)
+
 object GeminiApiClient {
     private const val BASE_URL = "https://generativelanguage.googleapis.com/"
 
@@ -99,7 +105,7 @@ object GeminiApiClient {
         userPrompt: String,
         conversationHistory: List<GeminiContent> = emptyList(),
         customContext: String? = null
-    ): Result<String> {
+    ): Result<GeminiAnswer> {
         val apiKey = try {
             BuildConfig.GEMINI_API_KEY
         } catch (e: Throwable) {
@@ -141,16 +147,40 @@ object GeminiApiClient {
                 val response = api.generateContent(effectiveKey, request)
                 val reply = response.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text
                 if (!reply.isNullOrBlank()) {
-                    Result.success(reply)
+                    Result.success(
+                        GeminiAnswer(
+                            text = reply,
+                            isLiveAI = true,
+                            sourceLabel = "Gemini 2.5 Live Yapay Zeka"
+                        )
+                    )
                 } else {
-                    Result.success(getFallbackSpiritualWisdom(userPrompt))
+                    Result.success(
+                        GeminiAnswer(
+                            text = getFallbackSpiritualWisdom(userPrompt),
+                            isLiveAI = false,
+                            sourceLabel = "Çevrimdışı Manevi Bilgi Kaynağı (Diyanet / Sahih Hadisler)"
+                        )
+                    )
                 }
             } else {
                 // Return rich built-in spiritual intelligence if API key is in prototype/local mode
-                Result.success(getFallbackSpiritualWisdom(userPrompt))
+                Result.success(
+                    GeminiAnswer(
+                        text = getFallbackSpiritualWisdom(userPrompt),
+                        isLiveAI = false,
+                        sourceLabel = "Çevrimdışı Manevi Bilgi Kaynağı (Diyanet / Sahih Hadisler)"
+                    )
+                )
             }
         } catch (e: Exception) {
-            Result.success(getFallbackSpiritualWisdom(userPrompt, e.localizedMessage))
+            Result.success(
+                GeminiAnswer(
+                    text = getFallbackSpiritualWisdom(userPrompt, e.localizedMessage),
+                    isLiveAI = false,
+                    sourceLabel = "Çevrimdışı Bilgi Kaynağı (Bağlantı Yok)"
+                )
+            )
         }
     }
 

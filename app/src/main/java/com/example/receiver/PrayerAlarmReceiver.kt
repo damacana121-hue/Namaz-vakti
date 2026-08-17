@@ -23,13 +23,16 @@ class PrayerAlarmReceiver : BroadcastReceiver() {
         val isEarly = intent.getBooleanExtra("IS_EARLY", false)
 
         try {
+            val settingsRepo = SettingsRepository(context)
+            val currentSettings = settingsRepo.settings.value
             val prayerType = PrayerType.valueOf(prayerTypeName)
             NotificationHelper.showPrayerNotification(
                 context = context,
                 prayerType = prayerType,
                 cityName = cityName,
                 timeFormatted = timeFormatted,
-                isEarlyReminder = isEarly
+                isEarlyReminder = isEarly,
+                soundType = currentSettings.soundType
             )
         } catch (e: Exception) {
             e.printStackTrace()

@@ -90,16 +90,21 @@ object LocationHelper {
             }
         }
 
+        // Detect device / location active timezone offset dynamically
+        val deviceTzOffsetHours = (java.util.TimeZone.getDefault().getOffset(System.currentTimeMillis()) / 3600000.0).let {
+            if (it == 0.0 && closestCity.country == "Türkiye") 3.0 else it
+        }
+
         return if (minDistance <= 45.0) {
             // Within 45km of known city center
-            closestCity.copy(latitude = lat, longitude = lon)
+            closestCity.copy(latitude = lat, longitude = lon, timeZoneOffsetHours = deviceTzOffsetHours)
         } else {
             CityLocation(
                 name = "📍 GPS Konumu (${String.format("%.2f", lat)}, ${String.format("%.2f", lon)})",
                 country = "Otomatik Konum",
                 latitude = lat,
                 longitude = lon,
-                timeZoneOffsetHours = 3.0
+                timeZoneOffsetHours = deviceTzOffsetHours
             )
         }
     }
