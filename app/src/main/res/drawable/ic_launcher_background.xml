@@ -14,14 +14,10 @@
                 android:endX="108"
                 android:endY="108"
                 android:type="linear">
-                <item android:offset="0.0" android:color="#064E3B" />
-                <item android:offset="0.5" android:color="#047857" />
-                <item android:offset="1.0" android:color="#065F46" />
+                <item android:offset="0.0" android:color="#022C22" />
+                <item android:offset="0.5" android:color="#064E3B" />
+                <item android:offset="1.0" android:color="#042F2E" />
             </gradient>
         </aapt:attr>
     </path>
-    <!-- Geometric subtle star pattern -->
-    <path
-        android:pathData="M54,10 L57,20 L67,20 L59,26 L62,36 L54,30 L46,36 L49,26 L41,20 L51,20 Z"
-        android:fillColor="#15FBBF24" />
 </vector>
