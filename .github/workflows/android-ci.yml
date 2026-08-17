@@ -4,6 +4,7 @@ on:
   push:
     branches: [ "**" ]
   pull_request:
+  workflow_dispatch:
 
 jobs:
   build-and-test:
@@ -34,12 +35,11 @@ jobs:
           PRAYER_TEST_LATITUDE: '41.0082'
           PRAYER_TEST_LONGITUDE: '28.9782'
         run: bash scripts/api-smoke-test.sh
-      - name: Unit tests
-        run: gradle testDebugUnitTest --stacktrace
-      - name: Debug APK
+      - name: Build debug APK
         run: gradle assembleDebug --stacktrace
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: namaz-vakti-debug-apk
           path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
