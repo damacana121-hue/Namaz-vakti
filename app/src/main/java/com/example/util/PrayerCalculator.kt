@@ -28,18 +28,25 @@ data class DailyPrayerSchedule(
 )
 
 /**
- * Offline astronomical prayer-time calculation.
+ * Offline prayer-time calculator following Diyanet's published calculation
+ * conventions. No network request is required.
  *
- * Important: the previous implementation used the wrong Asr formula: it passed
- * an angle into the generic solar-angle routine although Asr is defined from
- * the shadow-length condition. That could produce nonsensical values such as
- * 00:55. Asr is now calculated directly from the shadow factor.
+ * Diyanet states that its calendars use the first appearance of true dawn for
+ * imsak, no temkin for imsak/yatsı, 7 minutes at sunrise/sunset, 4 minutes at
+ * ikindi and 5 minutes after solar noon for öğle. See Diyanet's official
+ * "İbadet Vakitlerinde Temkin" explanation.
  */
 object PrayerCalculator {
     private const val FAJR_ANGLE = 18.0
     private const val ISHA_ANGLE = 17.0
-    private const val ASR_SHADOW_FACTOR = 1.0
     private const val SUN_ALTITUDE = -0.833
+    private const val ASR_SHADOW_FACTOR = 1.0
+
+    // Diyanet temkin rules, in minutes.
+    private const val SUNRISE_TEMKIN_MIN = -7.0
+    private const val MAGHRIB_TEMKIN_MIN = 7.0
+    private const val DHUHR_TEMKIN_MIN = 5.0
+    private const val ASR_TEMKIN_MIN = 4.0
 
     fun calculatePrayerTimes(
         latitude: Double,
@@ -50,41 +57,59 @@ object PrayerCalculator {
         val year = calendar.get(Calendar.YEAR)
         val month = calendar.get(Calendar.MONTH) + 1
         val day = calendar.get(Calendar.DAY_OF_MONTH)
-        val julianDate = getJulianDate(year, month, day)
-        val d = julianDate - 2451545.0
+        val dayOfYear = calendar.get(Calendar.DAY_OF_YEAR)
 
-        val g = fixAngle(357.529 + 0.98560028 * d)
-        val q = fixAngle(280.459 + 0.98564736 * d)
-        val l = fixAngle(q + 1.915 * sin(Math.toRadians(g)) + 0.020 * sin(Math.toRadians(2 * g)))
-        val e = 23.439 - 0.00000036 * d
-        val declination = Math.toDegrees(asin(sin(Math.toRadians(e)) * sin(Math.toRadians(l))))
-        val rightAscension = Math.toDegrees(
-            atan2(cos(Math.toRadians(e)) * sin(Math.toRadians(l)), cos(Math.toRadians(l)))
-        ) / 15.0
-        val fixedRA = fixHour(rightAscension)
-        val eqOfTime = q / 15.0 - fixedRA
-        val noon = fixHour(12.0 + timeZone - longitude / 15.0 - eqOfTime)
-
-        val fajrHour = noon - solarHourAngle(latitude, declination, -FAJR_ANGLE)
-        val sunriseHour = noon - solarHourAngle(latitude, declination, SUN_ALTITUDE)
-        val dhuhrHour = noon
-
-        // Correct Asr calculation for shadow factor 1 (standard/Diyanet-style
-        // calculation): altitude = -atan(1 / (factor + tan(|lat-dec|))).
-        val solarAltitudeAtNoon = -Math.toDegrees(
-            atan(1.0 / (ASR_SHADOW_FACTOR + tan(Math.toRadians(abs(latitude - declination)))))
+        // NOAA-style solar equations are stable, fast and fully offline.
+        val gamma = 2.0 * PI / 365.0 * (dayOfYear - 1)
+        val equationOfTime = 229.18 * (
+            0.000075 +
+                0.001868 * cos(gamma) -
+                0.032077 * sin(gamma) -
+                0.014615 * cos(2.0 * gamma) -
+                0.040849 * sin(2.0 * gamma)
         )
-        val asrHour = noon + solarHourAngle(latitude, declination, solarAltitudeAtNoon)
+        val declination =
+            0.006918 -
+                0.399912 * cos(gamma) +
+                0.070257 * sin(gamma) -
+                0.006758 * cos(2.0 * gamma) +
+                0.000907 * sin(2.0 * gamma) -
+                0.002697 * cos(3.0 * gamma) +
+                0.00148 * sin(3.0 * gamma)
 
-        val maghribHour = noon + solarHourAngle(latitude, declination, SUN_ALTITUDE)
-        val ishaHour = noon + solarHourAngle(latitude, declination, -ISHA_ANGLE)
+        // Solar noon in local civil time.
+        val solarNoonMinutes = 720.0 - 4.0 * longitude - equationOfTime + timeZone * 60.0
 
-        val fajrTime = createPrayerTime(calendar, PrayerType.FAJR, fajrHour)
-        val sunriseTime = createPrayerTime(calendar, PrayerType.SUNRISE, sunriseHour)
-        val dhuhrTime = createPrayerTime(calendar, PrayerType.DHUHR, dhuhrHour)
-        val asrTime = createPrayerTime(calendar, PrayerType.ASR, asrHour)
-        val maghribTime = createPrayerTime(calendar, PrayerType.MAGHRIB, maghribHour)
-        val ishaTime = createPrayerTime(calendar, PrayerType.ISHA, ishaHour)
+        val fajrRaw = solarNoonMinutes - solarTimeDifferenceMinutes(latitude, declination, -FAJR_ANGLE)
+        val sunriseRaw = solarNoonMinutes - solarTimeDifferenceMinutes(latitude, declination, SUN_ALTITUDE)
+        val dhuhrRaw = solarNoonMinutes + DHUHR_TEMKIN_MIN
+
+        // Asr shadow factor 1 (one mithl). The altitude is POSITIVE here;
+        // using a negative altitude was the source of the old 00:55-style bug.
+        val solarAltitudeAtAsr = Math.toDegrees(
+            atan(
+                1.0 / (
+                    ASR_SHADOW_FACTOR +
+                        tan(abs(Math.toRadians(latitude) - declination))
+                )
+            )
+        )
+        val asrRaw = solarNoonMinutes +
+            solarTimeDifferenceMinutes(latitude, declination, solarAltitudeAtAsr) +
+            ASR_TEMKIN_MIN
+
+        val maghribRaw = solarNoonMinutes +
+            solarTimeDifferenceMinutes(latitude, declination, SUN_ALTITUDE) +
+            MAGHRIB_TEMKIN_MIN
+        val ishaRaw = solarNoonMinutes +
+            solarTimeDifferenceMinutes(latitude, declination, -ISHA_ANGLE)
+
+        val fajrTime = createPrayerTime(calendar, PrayerType.FAJR, fajrRaw)
+        val sunriseTime = createPrayerTime(calendar, PrayerType.SUNRISE, sunriseRaw + SUNRISE_TEMKIN_MIN)
+        val dhuhrTime = createPrayerTime(calendar, PrayerType.DHUHR, dhuhrRaw)
+        val asrTime = createPrayerTime(calendar, PrayerType.ASR, asrRaw)
+        val maghribTime = createPrayerTime(calendar, PrayerType.MAGHRIB, maghribRaw)
+        val ishaTime = createPrayerTime(calendar, PrayerType.ISHA, ishaRaw)
 
         val prayers = listOf(fajrTime, sunriseTime, dhuhrTime, asrTime, maghribTime, ishaTime)
         val nowMillis = System.currentTimeMillis()
@@ -93,17 +118,33 @@ object PrayerCalculator {
         var foundNext = false
         var previousPrayerMillis = ishaTime.calendarTime.timeInMillis - 86_400_000L
 
-        for (i in prayers.indices) {
-            val p = prayers[i]
-            if (p.calendarTime.timeInMillis > nowMillis) {
-                nextPrayer = p
-                currentActive = if (i == 0) PrayerType.ISHA else prayers[i - 1].type
-                previousPrayerMillis = if (i == 0) {
-                    ishaTime.calendarTime.timeInMillis - 86_400_000L
-                } else prayers[i - 1].calendarTime.timeInMillis
-                foundNext = true
-                break
+        // For today's schedule, use the phone's real clock. For another selected
+        // date, show that date's first upcoming prayer rather than comparing it
+        // with today's clock.
+        val isToday = calendar.get(Calendar.ERA) == Calendar.getInstance().get(Calendar.ERA) &&
+            calendar.get(Calendar.YEAR) == Calendar.getInstance().get(Calendar.YEAR) &&
+            calendar.get(Calendar.DAY_OF_YEAR) == Calendar.getInstance().get(Calendar.DAY_OF_YEAR)
+
+        if (isToday) {
+            for (i in prayers.indices) {
+                val p = prayers[i]
+                if (p.calendarTime.timeInMillis > nowMillis) {
+                    nextPrayer = p
+                    currentActive = if (i == 0) PrayerType.ISHA else prayers[i - 1].type
+                    previousPrayerMillis = if (i == 0) {
+                        ishaTime.calendarTime.timeInMillis - 86_400_000L
+                    } else prayers[i - 1].calendarTime.timeInMillis
+                    foundNext = true
+                    break
+                }
             }
+        } else {
+            nextPrayer = prayers.first()
+            currentActive = PrayerType.ISHA
+            previousPrayerMillis = (fajrTime.calendarTime.clone() as Calendar).apply {
+                add(Calendar.DAY_OF_YEAR, -1)
+            }.timeInMillis
+            foundNext = true
         }
 
         if (!foundNext) {
@@ -121,12 +162,22 @@ object PrayerCalculator {
             previousPrayerMillis = ishaTime.calendarTime.timeInMillis
         }
 
-        val totalIntervalSec = max(1L, (nextPrayer.calendarTime.timeInMillis - previousPrayerMillis) / 1000L)
-        val remainingSec = max(0L, (nextPrayer.calendarTime.timeInMillis - nowMillis) / 1000L)
+        val remainingSec = if (isToday) {
+            max(0L, (nextPrayer.calendarTime.timeInMillis - nowMillis) / 1000L)
+        } else {
+            max(0L, (nextPrayer.calendarTime.timeInMillis - calendar.timeInMillis) / 1000L)
+        }
+        val totalIntervalSec = max(
+            1L,
+            (nextPrayer.calendarTime.timeInMillis - previousPrayerMillis) / 1000L
+        )
         val elapsedSec = (totalIntervalSec - remainingSec).coerceIn(0L, totalIntervalSec)
         val progress = (elapsedSec.toFloat() / totalIntervalSec.toFloat()).coerceIn(0f, 1f)
 
-        val monthsTr = arrayOf("Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık")
+        val monthsTr = arrayOf(
+            "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
+            "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"
+        )
         val daysTr = arrayOf("Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi")
         val dateFormatted = "$day ${monthsTr[month - 1]} $year, ${daysTr[calendar.get(Calendar.DAY_OF_WEEK) - 1]}"
 
@@ -146,21 +197,25 @@ object PrayerCalculator {
         )
     }
 
-    private fun solarHourAngle(lat: Double, dec: Double, altitude: Double): Double {
+    private fun solarTimeDifferenceMinutes(lat: Double, dec: Double, altitude: Double): Double {
         val latRad = Math.toRadians(lat)
-        val decRad = Math.toRadians(dec)
-        val altRad = Math.toRadians(altitude)
-        val denominator = cos(latRad) * cos(decRad)
-        val cosH = ((sin(altRad) - sin(latRad) * sin(decRad)) / denominator)
+        val cosH = (
+            sin(Math.toRadians(altitude)) -
+                sin(latRad) * sin(dec)
+            ) / (cos(latRad) * cos(dec))
         return when {
-            cosH <= -1.0 -> 12.0
+            cosH <= -1.0 -> 720.0
             cosH >= 1.0 -> 0.0
-            else -> Math.toDegrees(acos(cosH)) / 15.0
+            else -> Math.toDegrees(acos(cosH)) * 4.0
         }
     }
 
-    private fun createPrayerTime(baseCal: Calendar, type: PrayerType, fractionalHour: Double): SinglePrayerTime {
-        val totalMinutes = Math.round(fractionalHour * 60.0).toInt()
+    private fun createPrayerTime(
+        baseCal: Calendar,
+        type: PrayerType,
+        totalMinutesFromMidnight: Double
+    ): SinglePrayerTime {
+        val totalMinutes = Math.round(totalMinutesFromMidnight).toInt()
         val normalizedMin = ((totalMinutes % 1440) + 1440) % 1440
         val h = normalizedMin / 60
         val m = normalizedMin % 60
@@ -171,26 +226,5 @@ object PrayerCalculator {
             set(Calendar.MILLISECOND, 0)
         }
         return SinglePrayerTime(type, String.format("%02d:%02d", h, m), h, m, cal)
-    }
-
-    private fun getJulianDate(year: Int, month: Int, day: Int): Double {
-        var y = year
-        var m = month
-        if (m <= 2) { y -= 1; m += 12 }
-        val a = floor(y / 100.0)
-        val b = 2 - a + floor(a / 4.0)
-        return floor(365.25 * (y + 4716)) + floor(30.6001 * (m + 1)) + day + b - 1524.5
-    }
-
-    private fun fixHour(a: Double): Double {
-        var res = a - 24.0 * floor(a / 24.0)
-        if (res < 0) res += 24.0
-        return res
-    }
-
-    private fun fixAngle(a: Double): Double {
-        var res = a - 360.0 * floor(a / 360.0)
-        if (res < 0) res += 360.0
-        return res
     }
 }
