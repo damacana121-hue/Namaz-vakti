@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Golden Crescent Moon & Star -->
+    <path
+        android:fillColor="#FBBF24"
+        android:pathData="M60,30 C53,30 47,35 45,41 C44,44 44,48 45,51 C42,47 41,41 43,36 C45,30 50,26 56,25 C58,25 61,26 63,27 C61,29 60,30 60,30 Z" />
+    <path
+        android:fillColor="#FBBF24"
+        android:pathData="M52,32 L53.5,35 L57,35.5 L54.5,38 L55,41.5 L52,40 L49,41.5 L49.5,38 L47,35.5 L50.5,35 Z" />
+    <!-- Mosque Silhouette (Safe inside 66dp center zone) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,38 C47,44 44,52 44,60 L64,60 C64,52 61,44 54,38 Z" />
+    <!-- Left & Right Minarets -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M35,46 L37,42 L39,46 L39,76 L35,76 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M69,46 L71,42 L73,46 L73,76 L69,76 Z" />
+    <!-- Mosque Main Base & Arches -->
+    <path
+        android:fillColor="#F3F4F6"
+        android:pathData="M39,58 L69,58 L69,76 L39,76 Z" />
+    <!-- Door Arch -->
+    <path
+        android:fillColor="#064E3B"
+        android:pathData="M50,76 L50,66 C50,63.8 51.8,62 54,62 C56.2,62 58,63.8 58,66 L58,76 Z" />
+    <path
+        android:fillColor="#064E3B"
+        android:pathData="M42,72 L42,66 C42,64.9 42.9,64 44,64 C45.1,64 46,64.9 46,66 L46,72 Z" />
+    <path
+        android:fillColor="#064E3B"
+        android:pathData="M62,72 L62,66 C62,64.9 62.9,64 64,64 C65.1,64 66,64.9 66,66 L66,72 Z" />
+</vector>

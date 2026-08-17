@@ -1,0 +1,6 @@
+{
+  "name": "Namaz Vakti",
+  "description": "Ezan vakitleri, canlı saat-dakika-saniye geri sayım, GPS konumlu hassas kıble pusulası, Gemini Live sesli manevi rehber, Kur'an ve zikir takibi.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
