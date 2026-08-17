@@ -24,17 +24,24 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MyApplication">
         
+        <!-- Dedicated Boot Receiver for auto-rescheduling on restart -->
         <receiver
-            android:name=".receiver.PrayerAlarmReceiver"
+            android:name=".receiver.BootReceiver"
             android:enabled="true"
-            android:exported="true">
+            android:exported="true"
+            android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
                 <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
-                <action android:name="com.aistudio.namazvakti.ACTION_PRAYER_ALARM" />
             </intent-filter>
         </receiver>
+
+        <!-- Internal private Prayer Alarm Receiver (exported=false prevents external invocation attacks) -->
+        <receiver
+            android:name=".receiver.PrayerAlarmReceiver"
+            android:enabled="true"
+            android:exported="false" />
 
         <activity
             android:name=".MainActivity"

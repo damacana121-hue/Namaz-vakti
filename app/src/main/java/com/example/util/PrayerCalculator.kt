@@ -197,9 +197,22 @@ object PrayerCalculator {
         val bottom = cos(latRad) * cos(decRad)
         val cosH = top / bottom
 
-        if (cosH > 1.0) return 0.0
-        if (cosH < -1.0) return 12.0
-        return Math.toDegrees(acos(cosH)) / 15.0
+        // Standard angle calculation
+        if (cosH in -1.0..1.0) {
+            return Math.toDegrees(acos(cosH)) / 15.0
+        }
+
+        // High Latitude Adjustment (Angle-Based / 1-7th proportion approximation)
+        // When sun doesn't reach -18° (Fajr) or -17° (Isha) in high latitude summers
+        val sunriseHourAngle = run {
+            val sunTop = sin(Math.toRadians(-0.833)) - sin(latRad) * sin(decRad)
+            val sunCos = (sunTop / bottom).coerceIn(-1.0, 1.0)
+            Math.toDegrees(acos(sunCos)) / 15.0
+        }
+        val nightFraction = (24.0 - (2.0 * sunriseHourAngle)) / 2.0
+        val angleFactor = abs(angle) / 60.0
+        val adjustedDiff = sunriseHourAngle + (nightFraction * angleFactor).coerceAtLeast(1.0)
+        return adjustedDiff.coerceIn(0.0, 12.0)
     }
 
     private fun fixHour(a: Double): Double {

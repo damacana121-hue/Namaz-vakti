@@ -129,7 +129,7 @@ fun GeminiLiveScreen(
                     Column {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                text = "İkizler Zekası",
+                                text = "Akıllı Ömer",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -140,7 +140,7 @@ fun GeminiLiveScreen(
                                 shape = RoundedCornerShape(8.dp)
                             ) {
                                 Text(
-                                    text = "Gemini Live",
+                                    text = "Manevi Asistan",
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = ElegantLavenderPrimary,
@@ -554,7 +554,7 @@ fun GeminiLoadingBubble() {
                 )
                 Spacer(modifier = Modifier.width(10.dp))
                 Text(
-                    text = "İkizler Zekası düşünüyor...",
+                    text = "Akıllı Ömer düşünüyor...",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

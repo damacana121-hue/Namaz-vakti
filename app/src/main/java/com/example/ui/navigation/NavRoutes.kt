@@ -48,7 +48,7 @@ sealed class Screen(
 
     object GeminiAI : Screen(
         route = "gemini_ai",
-        title = "İkizler Zekası",
+        title = "Akıllı Ömer",
         selectedIcon = Icons.Filled.AutoAwesome,
         unselectedIcon = Icons.Outlined.AutoAwesome
     )

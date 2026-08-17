@@ -186,17 +186,20 @@ class PrayerRepository(private val database: AppDatabase) {
 
         val successRate = if (totalCompleted > 0) ((totalCompleted.toFloat() / 35f) * 100).toInt().coerceIn(0, 100) else 0
 
-        // Calculate current streak
+        // Calculate current streak (days with all 5 daily fard prayers completed)
         var streak = 0
         for (i in dailyCounts.indices.reversed()) {
-            if (dailyCounts[i] >= 3) {
+            if (dailyCounts[i] >= 5) {
                 streak++
+            } else if (i == 0 && dailyCounts[i] in 1..4) {
+                // If today is currently in progress, continue prior streak
+                continue
             } else {
                 break
             }
         }
 
-        // Most consistent prayer
+        // Most consistent prayer (handle ties gracefully)
         val countsMap = mapOf(
             "Sabah" to fajrCount,
             "Öğle" to dhuhrCount,
@@ -204,7 +207,12 @@ class PrayerRepository(private val database: AppDatabase) {
             "Akşam" to maghribCount,
             "Yatsı" to ishaCount
         )
-        val mostConsistent = countsMap.maxByOrNull { it.value }?.key ?: "Sabah"
+        val maxVal = countsMap.values.maxOrNull() ?: 0
+        val mostConsistent = if (maxVal > 0) {
+            countsMap.filter { it.value == maxVal }.keys.joinToString(", ")
+        } else {
+            "Henüz Veri Yok"
+        }
 
         return WeeklyPrayerAnalytics(
             dayLabels = labels,

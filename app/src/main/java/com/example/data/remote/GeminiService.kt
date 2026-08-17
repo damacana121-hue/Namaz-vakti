@@ -93,7 +93,7 @@ object GeminiApiClient {
     }
 
     private const val SYSTEM_INSTRUCTION_TEXT =
-        "Sen 'İkizler Zekası (Gemini Live) Manevi Rehberi ve Namaz Asistanı'sın. " +
+        "Sen 'Akıllı Ömer Manevi Rehberi ve Namaz Asistanı'sın. " +
         "Kullanıcılara namaz vakitleri, kıble yönü, namazın kılınışı, rekatları, sehiv secdesi, kaza namazları, " +
         "Kur'an-ı Kerim ayetleri, sahih hadisler, günlük dualar, zikirler ve manevi tavsiyeler hakkında güvenilir, " +
         "saygılı, kalbe huzur veren ve sade bir Türkçe ile sesli/yazılı yanıt verirsin. " +
@@ -226,7 +226,7 @@ object GeminiApiClient {
                 "5 vakit namazı cemaatle taçlandırmak ve günlük 1 sayfa dahi olsa Kur'an tilaveti yapmak manevi huzurunuzu artıracaktır."
 
             else ->
-                "İkizler Zekası (Gemini Live) Manevi Rehberinize hoş geldiniz!\n" +
+                "Akıllı Ömer Manevi Rehberinize hoş geldiniz!\n" +
                 "Namazların kılınışı, kıble tayini, Kur'an ayetleri, dualar, hadisler veya günlük ibadetleriniz hakkında dilediğiniz soruyu sorabilir ya da mikrofon butonuna basarak sesli konuşabilirsiniz."
         }
     }
