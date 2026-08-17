@@ -52,7 +52,7 @@ data class GeminiResponse(
 )
 
 interface GeminiApi {
-    @POST("v1beta/models/gemini-3.5-flash:generateContent")
+    @POST("v1beta/models/gemini-2.5-flash:generateContent")
     suspend fun generateContent(
         @Query("key") apiKey: String,
         @Body request: GeminiRequest
@@ -92,7 +92,8 @@ object GeminiApiClient {
         "Kur'an-ı Kerim ayetleri, sahih hadisler, günlük dualar, zikirler ve manevi tavsiyeler hakkında güvenilir, " +
         "saygılı, kalbe huzur veren ve sade bir Türkçe ile sesli/yazılı yanıt verirsin. " +
         "Cevaplarını maddeli, akıcı ve sesli okumaya (TTS) uygun temiz bir dilde oluştur. " +
-        "Gereksiz teknik jargondan kaçın, hikmetli ve doğru dini bilgiler aktar."
+        "Gereksiz teknik jargondan kaçın, hikmetli ve doğru dini bilgiler aktar. " +
+        "Fıkhi konularda her zaman Diyanet İşleri Başkanlığı'nın muteber görüşlerini temel al ve kullanıcıya yol göster."
 
     suspend fun askGemini(
         userPrompt: String,
